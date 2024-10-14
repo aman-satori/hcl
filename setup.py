@@ -8,8 +8,8 @@ Created on Thu Oct  3 10:16:38 2024
 from setuptools import setup, find_packages
 
 setup(
-    name='hcl',
-    version='0.1',
+    name='hclfunctions',
+    version='0.1.2',
     packages=find_packages(),
     description='A simple helper functions library for HighBond API.',
     author='Aman Jaiswar',
