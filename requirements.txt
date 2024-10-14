@@ -1,0 +1,4 @@
+requests
+pandas
+numpy
+requests-futures==1.0.1
