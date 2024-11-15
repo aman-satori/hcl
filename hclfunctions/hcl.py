@@ -40,6 +40,8 @@ http = requests.Session()
 http.mount("http://", ADAPTER)
 http.mount("https://", ADAPTER)
 
+v_api_host = hcl.system_variable["hb_api_host"]
+v_org_id = hcl.system_variable["organization_id"]
 
 def rate_limited_get(session, url, headers):
     """Handles rate-limited GET requests using a semaphore."""
