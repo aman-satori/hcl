@@ -51,7 +51,7 @@ def rate_limited_get(session, url, headers):
         return future
 
 
-def get_paginated_data(session, url, headers):
+def get_paginated_data(session, url, headers, v_api_host = v_api_host):
     """Fetches paginated data from a URL, handling multiple pages as necessary.
     
     Args:
@@ -89,7 +89,7 @@ def get_paginated_data(session, url, headers):
     return request_data
 
 
-def get_request_multiple(urls, headers):
+def get_request_multiple(urls, headers, v_api_host = v_api_host, v_org_id = v_org_id):
     """Fetches data from multiple URLs in batches, handling rate limits.
     
     Args:
@@ -138,7 +138,7 @@ def get_request_multiple(urls, headers):
     return responses
 
 
-def get_request(url, headers):
+def get_request(url, headers, v_api_host = v_api_host, v_org_id = v_org_id):
     """
     Formatted URL : f'{v_api_host}/v1/orgs/{v_org_id}/'
     Fetches data from a single URL with pagination.
