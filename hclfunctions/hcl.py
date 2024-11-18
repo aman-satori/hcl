@@ -63,29 +63,35 @@ def get_paginated_data(session, url, headers, v_api_host = v_api_host):
         list: A list of data retrieved from the paginated API.
     """
     request_data = []
-    url = f"{url}?page[size]=100" if "?" not in url else f"{url}&page[size]=100"
-
     # Initial request
-    get_req = rate_limited_get(session, url, headers)
-    result = get_req.result()
-    result.raise_for_status()
+    if "?" not in url:
+        url = f"{url}?page[size]=100"
+    else:
+        url = f"{url}&page[size]=100"
 
+    # Process the first response
+    get_req = rate_limited_get(session, url, headers)  # Rate-limited request
+    result = get_req.result()
+    result.raise_for_status()  # Raises HTTPError if the status code is 4xx or 5xx
     if result.status_code == 200:
         data = result.json()
-        request_data.extend(data.get("data", []))
+        if isinstance(data.get("data"), list):
+            request_data.extend(data.get("data"))
+        else:
+            request_data.append(data.get("data"))
 
-        # Continue fetching next pages if available
+        # Continue to fetch next pages if available
         while data.get("links") and data["links"].get("next"):
             next_url = f"{v_api_host}{data['links']['next']}"
-            get_req = rate_limited_get(session, next_url, headers)
+            get_req = rate_limited_get(session, next_url, headers)  # Rate-limited request
             result = get_req.result()
             result.raise_for_status()
             if result.status_code == 200:
                 data = result.json()
-                request_data.extend(data.get("data", []))
+                request_data.extend(data.get("data"))
             else:
                 raise RuntimeError(f"Failed to fetch data: Code - {result.status_code}, Error - {result.content}")
-
+    
     return request_data
 
 
@@ -115,7 +121,10 @@ def get_request_multiple(urls, headers, v_api_host = v_api_host, v_org_id = v_or
             try:
                 result = future.result()
                 if result:
-                    responses.extend(result if isinstance(result, list) else [result])
+                    if isinstance(result, list):
+                        responses.extend(result)
+                    else:
+                        responses.append(result)
             except HTTPError as http_err:
                 print(f"HTTP error occurred: {http_err}")
             except Exception as err:
