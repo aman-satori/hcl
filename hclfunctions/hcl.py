@@ -22,6 +22,39 @@ from requests.exceptions import HTTPError
 from urllib3.util import Retry
 from itertools import islice
 
+# environment.py
+class EnvironmentVariables:
+    @staticmethod
+    def get_api_host():
+        """
+        Attempts to get api_host from different possible environments.
+        Returns None if no valid source is found.
+        """
+        try:
+            # Try to import and use hcl if available
+            import hcl
+            return hcl.system_variable.get("hb_api_host")
+        except (ImportError, AttributeError):
+            # If hcl is not available or doesn't have the variable,
+            # try environment variables
+            import os
+            return os.environ.get("HB_API_HOST")
+
+    def get_org_id():
+        """
+        Attempts to get org_id from different possible environments.
+        Returns None if no valid source is found.
+        """
+        try:
+            # Try to import and use hcl if available
+            import hcl
+            return hcl.system_variable.get("organization_id")
+        except (ImportError, AttributeError):
+            # If hcl is not available or doesn't have the variable,
+            # try environment variables
+            import os
+            return os.environ.get("ORGANIZATION_ID")
+
 # Constants
 RETRY_STRATEGY = Retry(
     total=3,
@@ -59,11 +92,13 @@ def get_paginated_data(session, url, headers):
     Returns:
         list: A list of data retrieved from the paginated API.
     """
-    global v_api_host
-    if not v_api_host:
-        v_api_host = os.getenv("V_API_HOST")
-        if not v_api_host:
-            raise ValueError("The 'v_api_host' variable is not configured.")
+    v_api_host = EnvironmentVariables.get_api_host()
+    if v_api_host is None:
+        raise ValueError(
+            "API host not found. Either:\n"
+            "1. Ensure hcl.system_variable['hb_api_host'] is available, or\n"
+            "2. Set the HB_API_HOST environment variable"
+        )
     
     request_data = []
     # Initial request
@@ -162,11 +197,13 @@ def get_request(url, headers):
     Returns:
         list: A list of data retrieved from the API.
     """
-    global v_api_host
-    if not v_api_host:
-        v_api_host = os.getenv("V_API_HOST")
-        if not v_api_host:
-            raise ValueError("The 'v_api_host' variable is not configured.")
+    v_api_host = EnvironmentVariables.get_api_host()
+    if v_api_host is None:
+        raise ValueError(
+            "API host not found. Either:\n"
+            "1. Ensure hcl.system_variable['hb_api_host'] is available, or\n"
+            "2. Set the HB_API_HOST environment variable"
+        )
             
     request_data = []
     page_number = 1
@@ -285,6 +322,15 @@ def from_results(table_id, headers):
     Raises:
         Exception: If the request fails.
     """
+    v_api_host = EnvironmentVariables.get_api_host()
+    if v_api_host is None:
+        raise ValueError(
+            "API host not found. Either:\n"
+            "1. Ensure hcl.system_variable['hb_api_host'] is available, or\n"
+            "2. Set the HB_API_HOST environment variable"
+        )
+    v_org_id = EnvironmentVariables.get_org_id()
+        
     records = http.get(f"{v_api_host}/v1/orgs/{v_org_id}/tables/{table_id}/records", headers=headers)
     if records.status_code == 200:
         records = json.loads(records.content)
