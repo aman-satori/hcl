@@ -169,7 +169,10 @@ def get_request(url, headers, v_api_host = v_api_host, v_org_id = v_org_id):
     else:
         return None
 
-    request_data.extend(data["data"])
+    if isinstance(data["data"], list):
+        request_data.extend(data["data"])
+    else:
+        request_data.append(data["data"])
     sys.stdout.write(f"Page {page_number}\r")
     sys.stdout.flush()
 
@@ -180,7 +183,10 @@ def get_request(url, headers, v_api_host = v_api_host, v_org_id = v_org_id):
             get_req = http.get(f"{v_api_host}{data['links']['next']}", headers=headers)
             if get_req.status_code == 200:
                 data = json.loads(get_req.content)
-                request_data.extend(data["data"])
+                if isinstance(data["data"], list):
+                    request_data.extend(data["data"])
+                else:
+                    request_data.append(data["data"])
                 page_number += 1
                 sys.stdout.write(f"Page {page_number}\r")
                 sys.stdout.flush()
