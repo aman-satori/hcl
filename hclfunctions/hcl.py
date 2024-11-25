@@ -40,9 +40,6 @@ http = requests.Session()
 http.mount("http://", ADAPTER)
 http.mount("https://", ADAPTER)
 
-v_api_host = hcl.system_variable["hb_api_host"]
-v_org_id = hcl.system_variable["organization_id"]
-
 def rate_limited_get(session, url, headers):
     """Handles rate-limited GET requests using a semaphore."""
     with semaphore:
@@ -51,7 +48,7 @@ def rate_limited_get(session, url, headers):
         return future
 
 
-def get_paginated_data(session, url, headers, v_api_host = v_api_host):
+def get_paginated_data(session, url, headers):
     """Fetches paginated data from a URL, handling multiple pages as necessary.
     
     Args:
@@ -62,6 +59,12 @@ def get_paginated_data(session, url, headers, v_api_host = v_api_host):
     Returns:
         list: A list of data retrieved from the paginated API.
     """
+    global v_api_host
+    if not v_api_host:
+        v_api_host = os.getenv("V_API_HOST")
+        if not v_api_host:
+            raise ValueError("The 'v_api_host' variable is not configured.")
+    
     request_data = []
     # Initial request
     if "?" not in url:
@@ -95,7 +98,7 @@ def get_paginated_data(session, url, headers, v_api_host = v_api_host):
     return request_data
 
 
-def get_request_multiple(urls, headers, v_api_host = v_api_host, v_org_id = v_org_id):
+def get_request_multiple(urls, headers):
     """Fetches data from multiple URLs in batches, handling rate limits.
     
     Args:
@@ -147,7 +150,7 @@ def get_request_multiple(urls, headers, v_api_host = v_api_host, v_org_id = v_or
     return responses
 
 
-def get_request(url, headers, v_api_host = v_api_host, v_org_id = v_org_id):
+def get_request(url, headers):
     """
     Formatted URL : f'{v_api_host}/v1/orgs/{v_org_id}/'
     Fetches data from a single URL with pagination.
@@ -159,6 +162,12 @@ def get_request(url, headers, v_api_host = v_api_host, v_org_id = v_org_id):
     Returns:
         list: A list of data retrieved from the API.
     """
+    global v_api_host
+    if not v_api_host:
+        v_api_host = os.getenv("V_API_HOST")
+        if not v_api_host:
+            raise ValueError("The 'v_api_host' variable is not configured.")
+            
     request_data = []
     page_number = 1
     url = f"{url}?page[size]=100" if "?" not in url else f"{url}&page[size]=100"
